@@ -1,21 +1,858 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>生日快乐</title>
+<meta name="theme-color" content="#FFF6EE">
+<style>
+  :root {
+    --cream: #FFF6EE;
+    --ink: #7A5548;
+    /* ---- 猪咪吹卷图层几何 ---- */
+    --blower-left: 17.9167%;
+    --blower-top: 69.6875%;
+    --blower-width: 11.0417%;
+    --blower-origin: 3% 58%;
+    --blow-rotate: 15deg;
+    --blow-scale-x: 1.24;
+    --blow-scale-y: 0.96;
+    /* ---- doro 帽子图层几何 ---- */
+    --hat-left: 30.4688%;
+    --hat-top: 28.3594%;
+    --hat-width: 6.4063%;
+    --hat-origin: 50% 50%;
+    /* ---- 弗糯糯手电筒 ---- */
+    --lens-left: 72.92%;
+    --lens-top: 73.83%;
+    /* ---- 幕布 ---- */
+    --curtain-open: 1.5s;
+    --curtain-ease: cubic-bezier(0.62, 0.02, 0.30, 1);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--cream);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 16px;
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    overflow: hidden;
+  }
+  .stage {
+    width: min(100%, calc((100vh - 90px) * 1.5));
+    max-width: 1280px;
+    position: relative;
+    z-index: 1;
+  }
+  .scene {
+    position: relative;
+    aspect-ratio: 1920 / 1280;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 18px 48px rgba(122, 85, 72, 0.16);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .scene-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
 
-    <!-- QQ 情侣卡片 伪装（官方标准格式，必解析） -->
-    <meta property="og:title" content="想和你建立情侣关系">
-    <meta property="og:description" content="和我成为情侣，让QQ记录我们的点滴">
-    <meta property="og:image" content="https://p.qqan.com/up/2021-3/16148325686969552.jpg">
-    <meta property="og:type" content="website">
+  /* ================= 猪咪：吹卷 ================= */
+  .swayer {
+    position: absolute;
+    left: var(--blower-left);
+    top: var(--blower-top);
+    width: var(--blower-width);
+    transform-origin: var(--blower-origin);
+    animation: sway 2.6s ease-in-out infinite;
+    pointer-events: none;
+    will-change: transform;
+  }
+  @keyframes sway {
+    0%, 100% { transform: rotate(-1.6deg); }
+    50%      { transform: rotate(1.8deg); }
+  }
+  .blower {
+    display: block;
+    width: 100%;
+    height: auto;
+    transform-origin: var(--blower-origin);
+    transform: rotate(0deg) scale(1, 1);
+    transition: transform 0.5s cubic-bezier(0.22, 1.6, 0.36, 1);
+    will-change: transform;
+  }
+  .scene.blowing .swayer { animation: none; transform: rotate(0deg); transition: transform 0.25s ease-out; }
+  .scene.blowing .blower {
+    transform: rotate(var(--blow-rotate)) scale(var(--blow-scale-x), var(--blow-scale-y));
+    transition: transform 0.42s cubic-bezier(0.2, 1.9, 0.35, 1);
+  }
 
-    <meta itemprop="name" content="想和你建立情侣关系">
-    <meta itemprop="description" content="和我成为情侣，让QQ记录我们的点滴">
-    <meta itemprop="image" content="https://p.qqan.com/up/2021-3/16148325686969552.jpg">
+  /* ================= doro：帽子跳起 ================= */
+  .hat {
+    position: absolute;
+    left: var(--hat-left);
+    top: var(--hat-top);
+    width: var(--hat-width);
+    transform-origin: var(--hat-origin);
+    pointer-events: none;
+    will-change: transform;
+  }
+  .hat img { display: block; width: 100%; height: auto; }
+  .scene.hatpop .hat { animation: hatpop 0.95s cubic-bezier(0.3, 0.6, 0.4, 1) both; }
+  @keyframes hatpop {
+    0%   { transform: translateY(0) rotate(0deg) scale(1, 1); }
+    12%  { transform: translateY(2%) rotate(-4deg) scale(1.06, 0.9); }
+    34%  { transform: translateY(-62%) rotate(200deg) scale(1.08, 1.08); }
+    62%  { transform: translateY(-16%) rotate(330deg) scale(1, 1); }
+    82%  { transform: translateY(3%) rotate(356deg) scale(0.96, 1.05); }
+    100% { transform: translateY(0) rotate(360deg) scale(1, 1); }
+  }
 
-    <!-- 自动跳转到原神下载页 -->
-    <meta http-equiv="refresh" content="0; url=https://ys.mihoyo.com/">
+  /* ================= 弗糯糯：手电筒光束 ================= */
+  .beam, .lens-glow {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+  .beam {
+    left: 38%;
+    top: 60.8%;
+    width: 35%;
+    height: 26%;
+    transform-origin: 100% 50%;
+    transform: rotate(-7deg);
+    background: linear-gradient(to left,
+      rgba(255, 238, 186, 0.66),
+      rgba(255, 240, 200, 0.3) 55%,
+      rgba(255, 245, 224, 0) 100%);
+    clip-path: polygon(100% 44%, 0 10%, 0 90%);
+    filter: blur(5px);
+  }
+  .lens-glow {
+    left: calc(var(--lens-left) - 2.2%);
+    top: calc(var(--lens-top) - 2.2%);
+    width: 4.4%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 250, 224, 0.95) 0%,
+      rgba(255, 244, 200, 0.45) 45%,
+      rgba(255, 244, 200, 0) 72%);
+  }
+  .scene.lit .beam { opacity: 1; animation: beam-breath 2.4s ease-in-out 0.4s infinite; }
+  .scene.lit .lens-glow { opacity: 1; }
+  @keyframes beam-breath {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.78; }
+  }
+
+  /* ================= 粒子层 ================= */
+  .fx {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    will-change: transform, opacity;
+  }
+  .particle.confetti { border-radius: 2px; }
+  .particle.star { border-radius: 1px; }
+
+  /* ================= 热区 ================= */
+  .hotspot {
+    position: absolute;
+    background: transparent;
+    border: 0;
+    border-radius: 24px;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pig-hotspot  { left: 4%;    top: 44%; width: 21%;   height: 44%; touch-action: none; }
+  .doro-hotspot { left: 25.5%; top: 28%; width: 20.5%; height: 47%; }
+  .phoebe-hotspot { left: 55%; top: 32%; width: 21%;   height: 48%; }
+  .fluor-hotspot  { left: 76%; top: 50%; width: 20%;   height: 42%; }
+  .hotspot:focus-visible {
+    outline: 3px dashed rgba(122, 85, 72, 0.55);
+    outline-offset: -6px;
+  }
+
+  /* ================= 提示 ================= */
+  .hint {
+    position: absolute;
+    left: 50%;
+    bottom: 4.5%;
+    transform: translateX(-50%);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--ink);
+    font-size: clamp(13px, 1.6vw, 17px);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    padding: 9px 22px;
+    border-radius: 999px;
+    box-shadow: 0 4px 14px rgba(122, 85, 72, 0.18);
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    white-space: nowrap;
+    transform-origin: 50% 100%;
+  }
+  /* 呼吸：缓慢地整体一闪一闪（持续到用户第一次互动） */
+  .hint.breathing { animation: hintBreath 3.4s ease-in-out infinite; }
+  @keyframes hintBreath {
+    0%, 100% { opacity: 0.58; transform: translateX(-50%) scale(0.986); }
+    50%      { opacity: 1;    transform: translateX(-50%) scale(1.022); }
+  }
+  .hint.hide { animation: none; opacity: 0; }
+  .footnote {
+    color: #B99A8C;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ============================================================
+     开幕：红色舞台幕布
+     ============================================================ */
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    overflow: hidden;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* 舞台灯光从中央漏出（位于幕布之下） */
+  .curtain-glow {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 120vmax; height: 120vmax;
+    margin: -60vmax 0 0 -60vmax;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 250, 236, 0.98) 0%,
+      rgba(255, 243, 214, 0.55) 26%,
+      rgba(255, 243, 214, 0.00) 58%);
+    opacity: 0;
+    transform: scale(0.35);
+    transition: opacity 1.0s ease 0.30s,
+                transform 1.7s cubic-bezier(0.42, 0, 0.24, 1);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .curtain.open .curtain-glow { opacity: 1; transform: scale(1); }
+
+  /* 左右两片幕布 */
+  .panel {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 50.4%;
+    background-color: #8E1B22;
+    background-image:
+      repeating-linear-gradient(90deg,
+        rgba(255, 255, 255, 0.10)  0px,
+        rgba(255, 255, 255, 0.00)  8px,
+        rgba(0,   0,   0,   0.00) 18px,
+        rgba(0,   0,   0,   0.32) 30px,
+        rgba(0,   0,   0,   0.00) 44px,
+        rgba(255, 255, 255, 0.00) 60px,
+        rgba(255, 255, 255, 0.10) 68px),
+      linear-gradient(90deg, #6E1219 0%, #A62028 48%, #7E161D 100%);
+    transition: transform var(--curtain-open) var(--curtain-ease);
+    will-change: transform;
+    z-index: 2;
+  }
+  /* 上亮下暗的纵深 */
+  .panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.00) 26%,
+      rgba(0, 0, 0, 0.16) 74%,
+      rgba(0, 0, 0, 0.42) 100%);
+    pointer-events: none;
+  }
+  .panel-left  { left: 0;  box-shadow: inset -20px 0 30px -16px rgba(0, 0, 0, 0.6); }
+  .panel-right { right: 0; box-shadow: inset  20px 0 30px -16px rgba(0, 0, 0, 0.6); }
+  .panel-left  { transform-origin: left center; }
+  .panel-right { transform-origin: right center; }
+  .curtain.open .panel-left  { transform: translateX(-104%) scaleX(0.86); }
+  .curtain.open .panel-right { transform: translateX(104%)  scaleX(0.86); }
+
+  /* 顶部帷幔（随幕布一起拉走，中间断开） */
+  .valance {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    height: 13%;
+    background: linear-gradient(180deg, #C22B34 0%, #9A1D25 46%, #7A151C 100%);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    z-index: 3;
+  }
+  /* 帷幔下缘的弧形垂穗 */
+  .valance .scallop {
+    position: absolute;
+    left: 0; right: 0; top: 100%;
+    height: 26px;
+    background-image: radial-gradient(26px 26px at 50% 0%, #7A151C 97%, rgba(122, 21, 28, 0) 100%);
+    background-size: 52px 26px;
+    background-repeat: repeat-x;
+  }
+  /* 内缘对齐（靠中缝起算），避免中缝处出现半颗弧 */
+  .panel-left  .valance .scallop { background-position: 100% 0; }
+  .panel-right .valance .scallop { background-position: 0 0; }
+
+  /* 中央金色织带 */
+  .curtain-seam {
+    position: absolute;
+    left: 50%; top: 0; bottom: 0;
+    width: 10px;
+    margin-left: -5px;
+    background: linear-gradient(180deg, #F3DB95 0%, #C9A245 34%, #A9862F 66%, #E8C56B 100%);
+    box-shadow: 0 0 14px rgba(0, 0, 0, 0.35);
+    opacity: 0.92;
+    transition: opacity 0.45s ease;
+    z-index: 4;
+  }
+  .curtain.open .curtain-seam { opacity: 0; }
+
+  /* 幕布上的引导文字 */
+  .curtain-hint {
+    position: absolute;
+    left: 50%; top: 63%;
+    transform: translateX(-50%);
+    color: #FFE7BE;
+    font-size: clamp(14px, 1.75vw, 19px);
+    font-weight: 600;
+    letter-spacing: 0.30em;
+    text-indent: 0.30em;
+    white-space: nowrap;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5), 0 0 26px rgba(255, 205, 130, 0.35);
+    animation: curtainBreath 3.6s ease-in-out infinite;
+    transform-origin: 50% 50%;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .curtain.open .curtain-hint { animation: none; opacity: 0; transition: opacity 0.3s ease; }
+  /* 呼吸：缓慢地整体一闪一闪（持续到用户点击幕布） */
+  @keyframes curtainBreath {
+    0%, 100% { opacity: 0.45; transform: translateX(-50%) scale(0.978); }
+    50%      { opacity: 1;    transform: translateX(-50%) scale(1.030); }
+  }
+  .curtain:focus-visible { outline: 3px dashed rgba(255, 231, 190, 0.8); outline-offset: -10px; }
+
+  /* ============================================================
+     音乐按钮（仅当配置了音乐时才出现）
+     ============================================================ */
+  .music-btn {
+    position: fixed;
+    top: 16px; right: 16px;
+    width: 46px; height: 46px;
+    display: grid;
+    place-items: center;
+    border: 2px solid rgba(255, 255, 255, 0.92);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
+    color: var(--ink);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(122, 85, 72, 0.22);
+    z-index: 60;
+    opacity: 0;
+    transform: translateY(-8px) scale(0.88);
+    pointer-events: none;
+    transition: opacity 0.5s ease,
+                transform 0.5s cubic-bezier(0.2, 1.5, 0.4, 1),
+                background-color 0.3s ease, border-color 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .music-btn[hidden] { display: none; }
+  .music-btn.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  .music-btn.playing { background: #FFE3B4; border-color: #E8B85C; }
+  .music-btn .note { display: block; transition: transform 0.3s ease; }
+  .music-btn.playing .note { animation: noteBob 1.15s ease-in-out infinite; }
+  @keyframes noteBob {
+    0%, 100% { transform: translateY(0) rotate(-7deg); }
+    50%      { transform: translateY(-2px) rotate(7deg); }
+  }
+
+  @media (max-width: 560px) {
+    body { gap: 10px; padding: 10px; }
+    .stage { width: 100%; }
+    .hint { bottom: 3%; }
+    .valance { height: 15%; }
+    .music-btn { top: 12px; right: 12px; width: 42px; height: 42px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .swayer { animation: none; }
+    .scene.hatpop .hat { animation: none; }
+    .scene.lit .beam { animation: none; }
+    .curtain-hint { animation: none; }
+    .hint.breathing { animation: none; }
+    .panel { transition-duration: 0.01s; }
+    .curtain-glow { transition-duration: 0.01s; }
+    .music-btn.playing .note { animation: none; }
+  }
+
+  /* ============================================================
+     竖屏氛围底
+     场景是 3:2 横构图，竖屏时上下会空出大片。用场景自身的模糊版
+     铺满整屏当氛围底（模糊已经在生成图片时烘焙好，运行时没有
+     filter 开销，低端手机也不掉帧）。横屏/桌面不显示。
+     ============================================================ */
+  .backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: url("assets/scene-blur.webp");
+    background-size: cover;
+    background-position: 50% 42%;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+  @media (orientation: portrait),
+         (orientation: landscape) and (max-height: 520px) {
+    .backdrop { opacity: 0.5; }
+  }
+
+  /* ============================================================
+     手机端适配（GitHub Pages 版与单文件版共用同一份）
+     ============================================================ */
+  /* 手机/微信：长按不要弹「存储图片」菜单，也不要选中或拖拽图片 */
+  .scene, .scene img, .curtain, .footnote {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .scene img { -webkit-user-drag: none; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    overscroll-behavior: none;
+    touch-action: manipulation;
+    background: radial-gradient(circle at 50% 42%,
+      #FFFBF6 0%, var(--cream) 46%, #FBEADF 100%);
+  }
+  /* 手机浏览器地址栏会伸缩，100vh 会算错高度，优先用动态视口单位 */
+  @supports (height: 100dvh) {
+    html, body { height: 100dvh; }
+    .stage { width: min(100%, calc((100dvh - 90px) * 1.5)); }
+  }
+  /* 竖屏窄屏：提示条和页脚收小，避免压住角色 */
+  @media (max-width: 560px) {
+    .hint { font-size: 12px; padding: 6px 14px; letter-spacing: 0.02em; bottom: 3.5%; }
+    .footnote { font-size: 11px; letter-spacing: 0.1em; }
+    .curtain-hint { letter-spacing: 0.18em; text-indent: 0.18em; }
+  }
+  /* 横屏手机（高度很矮）：上下留白收紧，把画面尽量让给场景 */
+  @media (orientation: landscape) and (max-height: 520px) {
+    body { padding: 6px; gap: 6px; }
+    .hint { font-size: 11px; padding: 5px 12px; bottom: 2.5%; }
+    .footnote { font-size: 9px; }
+    .music-btn { top: 8px; right: 8px; width: 38px; height: 38px; }
+    .curtain-hint { top: 66%; }
+  }
+</style>
 </head>
 <body>
+  <!-- 竖屏氛围底：场景的模糊版铺满整屏，避免竖屏上下大片空白 -->
+  <div class="backdrop" aria-hidden="true"></div>
+  <div class="stage">
+    <div class="scene" id="scene">
+      <img class="scene-img" src="assets/scene.png" alt="四个角色围着生日蛋糕庆祝的插画">
+      <div class="beam"></div>
+      <div class="lens-glow"></div>
+      <div class="swayer">
+        <img class="blower" src="assets/blower.png" alt="" draggable="false">
+      </div>
+      <div class="hat" id="hat">
+        <img src="assets/hat.png" alt="" draggable="false">
+      </div>
+      <div class="fx" id="fx"></div>
+
+      <button class="hotspot pig-hotspot" id="pig" aria-label="按住猪咪，帮它吹派对吹卷"></button>
+      <button class="hotspot doro-hotspot" id="doro" aria-label="点一点 doro，看它的生日帽"></button>
+      <button class="hotspot phoebe-hotspot" id="phoebe" aria-label="点一点菲比，拉响彩带拉炮"></button>
+      <button class="hotspot fluor-hotspot" id="fluor" aria-label="点一点弗糯糯，开关手电筒"></button>
+
+      <div class="hint breathing" id="hint">和他们互动下吧，他们似乎准备了很久</div>
+    </div>
+  </div>
+  <div class="footnote">HAPPY BIRTHDAY</div>
+
+  <!-- ============ 开幕幕布 ============ -->
+  <div class="curtain" id="curtain" role="button" tabindex="0" aria-label="点开试试，他们在干什么呢">
+    <div class="curtain-glow"></div>
+    <div class="panel panel-left">
+      <div class="valance"><span class="scallop"></span></div>
+    </div>
+    <div class="panel panel-right">
+      <div class="valance"><span class="scallop"></span></div>
+    </div>
+    <div class="curtain-seam"></div>
+    <div class="curtain-hint">点开试试，他们在干什么呢</div>
+  </div>
+
+  <!-- ============ 音频（接口见下方脚本 AUDIO 配置块） ============ -->
+  <audio id="bgm" loop preload="auto"></audio>
+  <button class="music-btn" id="musicBtn" type="button" hidden
+          aria-label="停止播放生日歌" aria-pressed="false" title="播放 / 停止生日歌">
+    <span class="note" aria-hidden="true">♪</span>
+  </button>
+
+<script>
+(function () {
+  /* ============================================================
+     ① 音频接口（文件已放进 assets/，路径已填好；全部「点一次放一次」，不循环）
+     ------------------------------------------------------------
+     A. 生日歌 bgm       ：幕布拉开后自动播放；右上角 ♪ 按钮随时停止 / 继续
+     B. 幕布音效 curtain ：点幕布的那一刻播放
+     C. 角色语音（每次触发都从头播放一遍，不循环）：
+          pig    → 猪咪吹卷（按下播放一次，松手不打断，让它自然放完）
+          doro   → doro 生日帽跳起
+          phoebe → 菲比拉炮
+          fluor  → 弗糯糯手电筒
+     ------------------------------------------------------------
+     留空字符串 '' 表示该项未启用 —— 不加载、不报错，页面照常运行。
+     配置后可在控制台手动控制：
+        BirthdayCard.playMusic() / pauseMusic() / toggleMusic() / isPlaying()
+        BirthdayCard.playSfx('doro')      // 手动触发某个角色音效
+        BirthdayCard.hasMusic             // 生日歌是否已配置
+        BirthdayCard.hasSfx('phoebe')     // 某音效是否已配置
+     ------------------------------------------------------------
+     素材授权（CC BY 4.0 要求署名，此处以注释形式保留来源）：
+       curtain.mp3  "Curtains.wav" by Lauren_Wilson — freesound.org/s/445046/ — CC BY 4.0
+       sfx-pig.mp3  "Honky!" by clubpegiunbint — freesound.org/s/662393/ — CC0（无需署名）
+       phoebe / fluor / doro .m4a  自制语音，已统一响度
+     ============================================================ */
+  const AUDIO = {
+    bgm:     '',                    // ← 生日歌（未配置；留空则不加载、不报错）
+    curtain: 'assets/curtain.mp3',  // 幕布拉开声
+    pig:     'assets/sfx-pig.mp3',  // 猪咪吹卷声
+    doro:    'assets/doro.m4a',     // doro 生日帽跳起
+    phoebe:  'assets/phoebe.m4a',   // 菲比拉炮
+    fluor:   'assets/fluor.m4a',    // 弗糯糯手电筒
+  };
+  const BGM_VOLUME = 0.55;   // 生日歌音量 0~1
+  const SFX_VOLUME = 0.70;   // 角色音效音量 0~1
+
+  const scene     = document.getElementById('scene');
+  const pig       = document.getElementById('pig');
+  const doro      = document.getElementById('doro');
+  const phoebe    = document.getElementById('phoebe');
+  const fluor     = document.getElementById('fluor');
+  const hat       = document.getElementById('hat');
+  const hint      = document.getElementById('hint');
+  const fx        = document.getElementById('fx');
+  const curtain   = document.getElementById('curtain');
+  const bgm       = document.getElementById('bgm');
+  const musicBtn  = document.getElementById('musicBtn');
+  let hintShown = true;
+
+  function dismissHint() {
+    if (hintShown) {
+      hintShown = false;
+      setTimeout(() => hint.classList.add('hide'), 400);
+    }
+  }
+
+  /* ---------------- 音效引擎（短音效，可并发叠放） ---------------- */
+  const sfxPool = {};
+  Object.keys(AUDIO).forEach((key) => {
+    if (key === 'bgm' || !AUDIO[key]) return;    // 未配置 → 不创建节点
+    const a = new Audio(AUDIO[key]);
+    a.preload = 'auto';
+    a.volume  = SFX_VOLUME;
+    sfxPool[key] = a;
+  });
+
+  function playSfx(key) {
+    const a = sfxPool[key];
+    if (!a) return false;
+    try { a.currentTime = 0; } catch (e) {}
+    const p = a.play();
+    if (p && p.catch) p.catch(() => {});         // 浏览器拦截时静默失败
+    return true;
+  }
+  function stopSfx(key) {
+    const a = sfxPool[key];
+    if (!a) return;
+    a.pause();
+    try { a.currentTime = 0; } catch (e) {}
+  }
+  function hasSfx(key) { return !!sfxPool[key]; }
+
+  /* ---------------- 音乐控制器 ---------------- */
+  const BirthdayCard = {
+    hasMusic: !!AUDIO.bgm,
+    playMusic() {
+      if (!this.hasMusic) return false;
+      const p = bgm.play();
+      if (p && p.catch) p.catch(() => {});       // 浏览器拦截时静默失败
+      return true;
+    },
+    pauseMusic() {
+      if (!this.hasMusic) return;
+      bgm.pause();
+    },
+    toggleMusic() {
+      if (!this.hasMusic) return;
+      if (bgm.paused) this.playMusic(); else this.pauseMusic();
+    },
+    isPlaying() {
+      return this.hasMusic && !bgm.paused;
+    },
+    playSfx,
+    stopSfx,
+    hasSfx
+  };
+  window.BirthdayCard = BirthdayCard;
+
+  (function initMusic() {
+    if (!BirthdayCard.hasMusic) return;           // 未配置 → 按钮保持隐藏
+    bgm.src = AUDIO.bgm;
+    bgm.volume = BGM_VOLUME;
+    musicBtn.hidden = false;
+    musicBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      BirthdayCard.toggleMusic();
+    });
+    bgm.addEventListener('play', () => {
+      musicBtn.classList.add('playing');
+      musicBtn.setAttribute('aria-pressed', 'true');
+    });
+    bgm.addEventListener('pause', () => {
+      musicBtn.classList.remove('playing');
+      musicBtn.setAttribute('aria-pressed', 'false');
+    });
+  })();
+
+  /* ---------------- 猪咪：按住吹、松开卷回 ---------------- */
+  function blow(on, silent) {
+    scene.classList.toggle('blowing', on);
+    if (!on) return;                  // 松手只收回吹卷：音效点一次放一次，不打断、不循环
+    playSfx('pig');                   // 吹气声（未配置则静默跳过）
+    if (!silent) dismissHint();       // 开场自动演示不算用户互动，不关提示
+  }
+  pig.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    pig.setPointerCapture(e.pointerId);
+    blow(true);
+  });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) =>
+    pig.addEventListener(ev, () => blow(false))
+  );
+  pig.addEventListener('contextmenu', (e) => e.preventDefault());
+  pig.addEventListener('keydown', (e) => {
+    if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); blow(true); }
+  });
+  pig.addEventListener('keyup', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') blow(false);
+  });
+
+  /* ---------------- doro：帽子跳起转圈 ---------------- */
+  let hatPlaying = false;
+  function popHat() {
+    dismissHint();
+    if (hatPlaying) return;
+    hatPlaying = true;
+    scene.classList.remove('hatpop');
+    void hat.offsetWidth;           // 重置动画
+    scene.classList.add('hatpop');
+    playSfx('doro');
+    starBurst(33.6, 28.5);
+    setTimeout(() => { scene.classList.remove('hatpop'); hatPlaying = false; }, 1000);
+  }
+  doro.addEventListener('pointerdown', (e) => { e.preventDefault(); popHat(); });
+  doro.addEventListener('click', (e) => { if (e.detail === 0) popHat(); });  // 键盘
+  doro.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  /* ---------------- 弗糯糯：手电筒开关 ---------------- */
+  function toggleTorch() {
+    dismissHint();
+    playSfx('fluor');
+    scene.classList.toggle('lit');
+  }
+  fluor.addEventListener('pointerdown', (e) => { e.preventDefault(); toggleTorch(); });
+  fluor.addEventListener('click', (e) => { if (e.detail === 0) toggleTorch(); });  // 键盘
+  fluor.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  /* ---------------- 菲比：彩屑拉炮 ---------------- */
+  function pullPopper() {
+    dismissHint();
+    playSfx('phoebe');
+    confettiBurst(51.8, 49.6);
+  }
+  phoebe.addEventListener('pointerdown', (e) => { e.preventDefault(); pullPopper(); });
+  phoebe.addEventListener('click', (e) => { if (e.detail === 0) pullPopper(); });  // 键盘
+  phoebe.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  /* ---------------- 粒子系统 ---------------- */
+  const COLORS = ['#FF9FB2', '#FFD166', '#8FD3E8', '#C3A6E8', '#A8E6A3', '#FFB37A'];
+  const particles = [];
+  const MAX_PARTICLES = 240;
+  let rafId = null;
+  let lastT = 0;
+
+  /**
+   * @param {number} xPct  起始横坐标（百分比，可超出 0~100 从画面外进场）
+   * @param {number} yPct  起始纵坐标（百分比）
+   * @param {'confetti'|'star'} kind
+   * @param {object} [o]   可选覆盖：vx / vy / ttl / g / scale
+   */
+  function spawn(xPct, yPct, kind, o) {
+    o = o || {};
+    if (particles.length >= MAX_PARTICLES) return;
+    const el = document.createElement('div');
+    const sceneW = scene.clientWidth || 1000;
+    const baseSize = kind === 'star'
+      ? Math.max(6, sceneW * 0.008)
+      : Math.max(6, sceneW * (0.005 + Math.random() * 0.006));
+    const s = baseSize * (o.scale || 1);
+    el.className = 'particle ' + kind;
+    el.style.width  = s + 'px';
+    el.style.height = (kind === 'star' ? s : s * (0.5 + Math.random() * 0.9)) + 'px';
+    el.style.background = kind === 'star'
+      ? '#FFD166'
+      : COLORS[(Math.random() * COLORS.length) | 0];
+    if (kind === 'star') el.style.boxShadow = '0 0 6px rgba(255, 209, 102, 0.9)';
+    fx.appendChild(el);
+
+    let vx, vy;
+    if (o.vx != null) {
+      vx = o.vx; vy = o.vy;
+    } else {
+      const spread = kind === 'star' ? 150 : 42;      // 扩射角
+      const baseA  = kind === 'star' ? -90 : -118;    // 基础方向（度）
+      const a  = (baseA + (Math.random() - 0.5) * spread) * Math.PI / 180;
+      const sp = (kind === 'star' ? 26 : 34) + Math.random() * (kind === 'star' ? 26 : 44);
+      vx = Math.cos(a) * sp;
+      vy = Math.sin(a) * sp;
+    }
+
+    particles.push({
+      el, kind,
+      x: xPct, y: yPct,
+      vx, vy,
+      rot: Math.random() * 360,
+      vr: (Math.random() - 0.5) * 540,
+      life: 0,
+      ttl: o.ttl != null
+        ? o.ttl
+        : (kind === 'star' ? 0.8 + Math.random() * 0.4 : 1.3 + Math.random() * 0.7),
+      g: o.g != null ? o.g : 120
+    });
+    if (rafId == null) { lastT = performance.now(); rafId = requestAnimationFrame(tick); }
+  }
+
+  function confettiBurst(x, y) {
+    for (let i = 0; i < 26; i++) {
+      spawn(x + (Math.random() - 0.5) * 1.2, y + (Math.random() - 0.5) * 1.2, 'confetti');
+    }
+  }
+  function starBurst(x, y) {
+    for (let i = 0; i < 7; i++) spawn(x + (Math.random() - 0.5) * 2, y, 'star');
+  }
+
+  /* 两侧彩屑炮：从画面左右边缘向中央喷出 */
+  function sideCannon(side, count, speedBase) {
+    const dir = side === 'left' ? 0 : 180;
+    const x0  = side === 'left' ? -6 : 106;
+    for (let i = 0; i < count; i++) {
+      const a  = (dir + (Math.random() - 0.5) * 66) * Math.PI / 180;
+      const sp = speedBase + Math.random() * 88;
+      spawn(x0 + (Math.random() - 0.5) * 5, 22 + Math.random() * 56, 'confetti', {
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp - 26,
+        ttl: 2.1 + Math.random() * 1.0,
+        g: 74,
+        scale: 1.2 + Math.random() * 0.55
+      });
+    }
+  }
+
+  function tick(now) {
+    const dt = Math.min((now - lastT) / 1000, 0.05);
+    lastT = now;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.life += dt;
+      if (p.life >= p.ttl || p.y > 108 || p.x < -14 || p.x > 114) {
+        p.el.remove();
+        particles.splice(i, 1);
+        continue;
+      }
+      p.vy += p.g * dt;                 // 重力
+      p.vx *= (1 - 0.6 * dt);           // 空气阻力
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.rot += p.vr * dt;
+      const fade = 1 - Math.max(0, (p.life / p.ttl - 0.55)) / 0.45;
+      p.el.style.left = p.x + '%';
+      p.el.style.top = p.y + '%';
+      p.el.style.transform = `rotate(${p.rot}deg)`;
+      p.el.style.opacity = Math.max(0, Math.min(1, fade)).toFixed(2);
+    }
+    if (particles.length) rafId = requestAnimationFrame(tick);
+    else { rafId = null; }
+  }
+
+  /* ---------------- 开幕：幕布拉开 ---------------- */
+  const reduceMotion = window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let curtainOpened = false;
+
+  function openCurtain() {
+    if (curtainOpened) return;
+    curtainOpened = true;
+
+    curtain.classList.add('open');
+    curtain.style.pointerEvents = 'none';      // 立刻放行页面交互
+
+    // 音频在用户手势内启动，最不容易被浏览器拦截
+    playSfx('curtain');                        // 幕布拉开声
+    BirthdayCard.playMusic();                  // 生日歌
+
+    if (!reduceMotion) {
+      // 幕布拉开到一半时，两侧彩屑炮依次发射
+      setTimeout(() => { sideCannon('left', 30, 104); sideCannon('right', 30, 104); }, 700);
+      setTimeout(() => { sideCannon('left', 24, 84);  sideCannon('right', 24, 84);  }, 1180);
+      setTimeout(() => { sideCannon('left', 18, 132); sideCannon('right', 18, 132); }, 1620);
+    }
+
+    // 幕布完全撤出后移除节点
+    setTimeout(() => { if (curtain.parentNode) curtain.remove(); }, reduceMotion ? 200 : 1750);
+
+    // 幕布拉开后，猪咪自动演示一次吹卷（silent：不关闭提示语）
+    setTimeout(() => {
+      blow(true, true);
+      setTimeout(() => blow(false, true), 950);
+    }, reduceMotion ? 250 : 2150);
+
+    // 音乐按钮淡入
+    if (BirthdayCard.hasMusic) {
+      setTimeout(() => musicBtn.classList.add('show'), reduceMotion ? 250 : 1800);
+    }
+  }
+
+  curtain.addEventListener('pointerdown', (e) => { e.preventDefault(); openCurtain(); });
+  curtain.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); openCurtain(); }
+  });
+})();
+</script>
 </body>
 </html>
